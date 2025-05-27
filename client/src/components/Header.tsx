@@ -1,4 +1,8 @@
-import LocationSearch from "./LocationSearch";
+import { useState, useCallback } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, MapPin } from "lucide-react";
+import debounce from "lodash/debounce";
 
 interface HeaderProps {
   location: string;
@@ -7,35 +11,55 @@ interface HeaderProps {
 }
 
 export default function Header({ location, setLocation, getCurrentLocation }: HeaderProps) {
+  const [searchValue, setSearchValue] = useState(location);
+
+  // Debounce the search function
+  const debouncedSearch = useCallback(
+    debounce((value: string) => {
+      setLocation(value);
+    }, 500),
+    [setLocation]
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    debouncedSearch(value);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocation(searchValue);
+  };
+
   return (
     <header className="mb-8">
-      <div className="flex flex-col md:flex-row justify-between items-center">
-        <div className="flex items-center mb-4 md:mb-0">
-          <svg
-            className="h-8 w-8 text-primary-500 mr-3"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M6 3v12" />
-            <path d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
-            <path d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
-            <path d="M15 12a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" />
-            <path d="M6 15h9" />
-            <path d="M18 9c0 1.5 1.5 3 3 3" />
-          </svg>
-          <h1 className="text-3xl font-bold text-gray-800">ClimateWeather</h1>
-        </div>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Climate AI Helper
+        </h1>
         
-        <LocationSearch 
-          location={location}
-          setLocation={setLocation}
-          getCurrentLocation={getCurrentLocation}
-        />
+        <form onSubmit={handleSubmit} className="flex w-full sm:w-auto gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <Input
+              type="text"
+              placeholder="Search location..."
+              value={searchValue}
+              onChange={handleSearchChange}
+              className="pl-9 pr-4 w-full"
+            />
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={getCurrentLocation}
+            title="Use current location"
+          >
+            <MapPin className="h-4 w-4" />
+          </Button>
+        </form>
       </div>
     </header>
   );

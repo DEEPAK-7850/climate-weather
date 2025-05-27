@@ -65,7 +65,7 @@ export default function AITipBox({ weatherData }: AITipBoxProps) {
   };
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col opacity-100">
       <div className="bg-primary-500 text-white p-4 rounded-t-xl">
         <div className="flex items-center">
           <Bot className="h-6 w-6 mr-3" />
@@ -73,7 +73,7 @@ export default function AITipBox({ weatherData }: AITipBoxProps) {
         </div>
       </div>
       
-      <div className="p-4 flex-grow flex flex-col">
+      <div className="p-4 flex-grow flex flex-col opacity-100">
         <div className="bg-primary-50 rounded-lg p-4 mb-4 border border-primary-200">
           <h4 className="font-medium text-primary-800 mb-2 flex items-center">
             <Lightbulb className="h-4 w-4 text-amber-500 mr-2" />

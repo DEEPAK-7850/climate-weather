@@ -5,79 +5,113 @@ import Footer from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { WeatherData, Forecast } from "@/types";
 import { useQuery } from "@tanstack/react-query";
+import { fetchWeatherData, fetchForecastData, fetchWeatherByCity } from '@/lib/api';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 export default function Home() {
   const [location, setLocation] = useState("");
   const [coordinates, setCoordinates] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Get user's location on initial load
-  useEffect(() => {
-    getCurrentLocation();
-  }, []);
+  // Fetch weather data
+  const {
+    data: weatherData,
+    isLoading: weatherLoading,
+    error: weatherError,
+  } = useQuery({
+    queryKey: ['weather', coordinates?.lat, coordinates?.lon, location],
+    queryFn: async () => {
+      if (coordinates) {
+        return fetchWeatherData(coordinates.lat, coordinates.lon);
+      } else if (location) {
+        return fetchWeatherByCity(location);
+      }
+      return null;
+    },
+    enabled: !!(coordinates || location),
+  });
 
-  // Get user's geolocation
+  // Fetch forecast data
+  const {
+    data: forecastData,
+    isLoading: forecastLoading,
+    error: forecastError,
+  } = useQuery({
+    queryKey: ['forecast', coordinates?.lat, coordinates?.lon],
+    queryFn: () => {
+      if (coordinates) {
+        return fetchForecastData(coordinates.lat, coordinates.lon);
+      }
+      return null;
+    },
+    enabled: !!coordinates,
+  });
+
+  // Get current location
   const getCurrentLocation = () => {
-    if (navigator.geolocation) {
+    if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setCoordinates({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           });
+          setLocation(''); // Clear location search when using coordinates
         },
         (error) => {
-          console.error("Error getting location:", error);
-          // Fallback to a default location (San Francisco)
-          setCoordinates({ lat: 37.7749, lon: -122.4194 });
-          setLocation("San Francisco");
+          console.error('Error getting location:', error);
         }
       );
     } else {
-      console.error("Geolocation is not supported by this browser");
-      // Fallback to a default location
-      setCoordinates({ lat: 37.7749, lon: -122.4194 });
-      setLocation("San Francisco");
+      console.error('Geolocation is not supported by this browser.');
     }
   };
 
-  // Search for a location
-  const searchLocation = (query: string) => {
-    setLocation(query);
+  // Try to get location on mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  // Handle location search
+  const handleLocationChange = (newLocation: string) => {
+    setLocation(newLocation);
+    setCoordinates(null); // Clear coordinates when searching by location
   };
 
-  // Fetch current weather based on coordinates
-  const { 
-    data: weatherData,
-    isLoading: isWeatherLoading,
-    error: weatherError 
-  } = useQuery<WeatherData>({
-    queryKey: coordinates ? [`/api/weather?lat=${coordinates.lat}&lon=${coordinates.lon}`] : [],
-    enabled: !!coordinates
-  });
-
-  // Fetch forecast data based on coordinates
-  const { 
-    data: forecastData,
-    isLoading: isForecastLoading,
-    error: forecastError 
-  } = useQuery<Forecast>({
-    queryKey: coordinates ? [`/api/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}`] : [],
-    enabled: !!coordinates
-  });
+  // Show error if both queries failed
+  if (weatherError || forecastError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Header
+          location={location}
+          setLocation={handleLocationChange}
+          getCurrentLocation={getCurrentLocation}
+        />
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {weatherError instanceof Error
+              ? weatherError.message
+              : 'Error loading weather data. Please try again.'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Header
           location={location}
-          setLocation={searchLocation}
+          setLocation={handleLocationChange}
           getCurrentLocation={getCurrentLocation}
         />
         <main>
           <WeatherDashboard 
             weatherData={weatherData}
             forecastData={forecastData}
-            isLoading={isWeatherLoading || isForecastLoading}
+            isLoading={weatherLoading || forecastLoading}
             error={weatherError || forecastError}
             location={location}
           />
