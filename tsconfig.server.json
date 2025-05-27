@@ -5,8 +5,10 @@
     "module": "ESNext",
     "outDir": "dist",
     "allowJs": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": false,
+    "rootDir": "."
   },
-  "include": ["server/**/*"],
+  "include": ["./server/**/*", "./shared/**/*"],
   "exclude": ["node_modules", "dist"]
 } 
