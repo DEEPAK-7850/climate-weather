@@ -3,11 +3,15 @@
   "compilerOptions": {
     "noEmit": false,
     "module": "ESNext",
-    "outDir": "dist",
+    "target": "ESNext",
+    "outDir": "./dist",
+    "rootDir": ".",
     "allowJs": true,
     "moduleResolution": "node",
     "allowImportingTsExtensions": false,
-    "rootDir": "."
+    "sourceMap": true,
+    "declaration": false,
+    "composite": false
   },
   "include": ["./server/**/*", "./shared/**/*"],
   "exclude": ["node_modules", "dist"]
